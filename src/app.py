@@ -1,0 +1,22 @@
+from flask import Flask, request, jsonify
+from reshuffler import shufflePlaylist, load_dataset
+import pandas as pd
+
+app = Flask(__name__)
+
+@app.route('/shuffle', methods=['POST'])
+def shuffle():
+    data = request.json
+    user_playlist = data.get('playlist', [])
+
+    try:
+        df = load_dataset()
+        shuffled_playlist = shufflePlaylist(df, user_playlist)
+        return jsonify(shuffled_playlist), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "An unexpected error occurred."}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
