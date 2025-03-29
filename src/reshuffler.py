@@ -8,74 +8,30 @@
 # 5. It does not consider tags.
 
 # %%
-%%capture
-import statsmodels.api as sm
+# %%capture
 import pandas as pd
 import numpy as np
 import random
-
-# for cross validation
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-#from kneed import KneeLocator
-from sklearn.feature_selection import RFE
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import RepeatedKFold
 
 
 # for preprocess
 from sklearn.preprocessing import scale
 
-
 # for accuracy measures
 from sklearn import metrics
-import sklearn.metrics as sm
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import classification_report
-from sklearn.metrics import roc_curve
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
 
 # ML algorithms
-from sklearn import tree
-from sklearn.tree import DecisionTreeClassifier, export_graphviz
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.cluster import KMeans
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import LogisticRegression
-from sklearn import svm
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.neural_network import MLPClassifier
 
 from sklearn.metrics.pairwise import cosine_similarity
 
 # hierarchical clustering
-from scipy.cluster.hierarchy import dendrogram, linkage
-from sklearn.cluster import DBSCAN
-from sklearn.datasets import make_moons
-from sklearn.metrics import adjusted_rand_score
 from sklearn.preprocessing import StandardScaler
-
-# visualizations
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.tree import export_graphviz
-import graphviz
-
-%matplotlib inline
-plt.style.use('ggplot')
-sns.set_style('whitegrid')
 
 import warnings
 warnings.filterwarnings('ignore')
 
 # %%
-%%capture
+# %%capture
 # This Python 3 environment comes with many helpful analytics libraries installed
 # It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
 # For example, here's several helpful packages to load
