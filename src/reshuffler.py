@@ -210,7 +210,7 @@ def shufflePlaylist(df, user_playlist, first_song_choice=None):
     """
     # Step 1: Validate and match user playlist songs with database
     matched_indices = []
-    song_name_mapping = zip(df['spotify_id'], df['name'])
+    song_name_mapping = dict(zip(df['spotify_id'], df['name']))
     for song in user_playlist:
         matches = df[
             df['spotify_id'] == song
@@ -395,7 +395,7 @@ def calculate_similarity_metrics(shuffled_playlist, original_df):
 
     return metrics
 
-def visualize_playlist_evaluation(metrics):
+# def visualize_playlist_evaluation(metrics):
     """
     Create visualizations for playlist shuffling evaluation.
 
@@ -459,7 +459,7 @@ def run_multiple_shuffles(df, user_playlist, num_shuffles=100):
 
     return all_metrics
 
-def comprehensive_evaluation(df, user_playlist):
+# def comprehensive_evaluation(df, user_playlist):
     """
     Perform comprehensive evaluation of playlist shuffler.
 
@@ -512,10 +512,10 @@ def comprehensive_evaluation(df, user_playlist):
 # Perform a single shuffle evaluation
 shuffled_playlist = shufflePlaylist(df, user_playlist)
 metrics = calculate_similarity_metrics(shuffled_playlist, df)
-visualize_playlist_evaluation(metrics)
+# visualize_playlist_evaluation(metrics)
 
 # Perform comprehensive evaluation
-comprehensive_metrics = comprehensive_evaluation(df, user_playlist)
+# comprehensive_metrics = comprehensive_evaluation(df, user_playlist)
 
 # %%
 
