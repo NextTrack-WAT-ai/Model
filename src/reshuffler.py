@@ -15,10 +15,10 @@ import random
 
 
 # for preprocess
-from sklearn.preprocessing import scale
+# from sklearn.preprocessing import scale
 
 # for accuracy measures
-from sklearn import metrics
+# from sklearn import metrics
 
 # ML algorithms
 
@@ -84,17 +84,15 @@ def load_dataset():
 # 7. Return the shuffled playlist.
 
 # %%
-user_playlist = [
-        {'name': 'Wonderwall', 'artist': 'Oasis'},
-        {'name': 'Mr. Brightside', 'artist': 'The Killers'},
-        {'name': 'Creep', 'artist': 'Radiohead'},
-        {'name': 'Come as You Are', 'artist': 'Nirvana'},
-        {'name': 'Let It Be', 'artist': 'The Beatles'},
-        {'name': 'Kill This Love', 'artist': 'Blackpink'},
-        {'name': 'Viva la Vida', 'artist': 'Coldplay'},
-        {'name': 'I Kissed a Girl', 'artist': 'Katy Perry'},
-        {'name': 'Hurt', 'artist': 'Johnny Cash'}
-    ]
+user_playlist = ['06UfBBDISthj1ZJAtX4xjj',
+ '09ZQ5TmUG8TSL56n0knqrj',
+ '01QoK9DA7VTeTSE3MNzp4I',
+ '0keNu0t0tqsWtExGM3nT1D',
+ '28YZkdihqt3e37t1IcqJIu',
+ '0GG7ei637NDIN2w11TWtLC',
+ '08A1lZeyLMWH58DT6aYjnC',
+ '005lwxGU1tms6HGELIcUv9',
+ '1jHhOrH4kIhjLFvagzvw1s']
 
 
 
@@ -190,7 +188,7 @@ feature_weights = {
 
 from sklearn.preprocessing import StandardScaler
 
-def shufflePlaylist(df, user_playlist, first_song_choice=None):
+def shufflePlaylist(df, user_playlist):
     """
     Shuffle a playlist based on song similarities in the database.
 
@@ -199,7 +197,7 @@ def shufflePlaylist(df, user_playlist, first_song_choice=None):
     df : pandas.DataFrame
         The database of songs containing features for similarity calculation
     user_playlist : list
-        List of dictionaries with 'name' and 'artist' keys
+        List of spotify ids
     first_song_choice : dict, optional
         Specific song to start the playlist with
 
@@ -220,7 +218,6 @@ def shufflePlaylist(df, user_playlist, first_song_choice=None):
             print(f"Warning: Song '{song_name_mapping[song]}' not found in database.")
         else:
             matched_indices.append(matches.index[0])
-
     # Raise error if no songs found
     if not matched_indices:
         raise ValueError("No songs from user's playlist were found in the database.")
@@ -290,22 +287,23 @@ def demonstrate_playlist_shuffler(df, user_playlist):
     try:
         # Option 1: Randomly select first song
         shuffled_playlist_random = shufflePlaylist(df, user_playlist)
+        song_names = dict(zip(df['spotify_id'], df['name']))
         print("Randomly Selected First Song Playlist:")
         for i, song in enumerate(shuffled_playlist_random, 1):
-            print(f"{i}. {song['name']} by {song['artist']}")
+            print(f"{i}. {song_names[song['spotify_id']]}")
 
         print("\n")
 
         # Option 2: Specify first song
-        first_song_choice = user_playlist[0]  # Example: use first song from playlist
-        shuffled_playlist_specific = shufflePlaylist(
-            df,
-            user_playlist,
-            first_song_choice
-        )
-        print(f"Playlist Starting with {first_song_choice['name']}:")
-        for i, song in enumerate(shuffled_playlist_specific, 1):
-            print(f"{i}. {song['name']} by {song['artist']}")
+        # first_song_choice = user_playlist[0]  # Example: use first song from playlist
+        # shuffled_playlist_specific = shufflePlaylist(
+        #     df,
+        #     user_playlist,
+        #     first_song_choice
+        # )
+        # print(f"Playlist Starting with {song_names[first_song_choice]}:")
+        # for i, song in enumerate(shuffled_playlist_specific, 1):
+        #     print(f"{i}. {song_names[song['spotify_id']]}")
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -365,13 +363,11 @@ def calculate_similarity_metrics(shuffled_playlist, original_df):
     for i in range(len(shuffled_playlist) - 1):
         # Find indices of current and next songs
         current_song = original_df[
-            (original_df['name'] == shuffled_playlist[i]['name']) &
-            (original_df['artist'] == shuffled_playlist[i]['artist'])
+            original_df['spotify_id'] == shuffled_playlist[i]['spotify_id']
         ].index[0]
 
         next_song = original_df[
-            (original_df['name'] == shuffled_playlist[i+1]['name']) &
-            (original_df['artist'] == shuffled_playlist[i+1]['artist'])
+            original_df['spotify_id'] == shuffled_playlist[i+1]['spotify_id']
         ].index[0]
 
         # Calculate cosine similarity between consecutive songs
