@@ -5,6 +5,4 @@ def validate_playlist(playlist):
     return True
 
 def format_response(shuffled_playlist):
-    return {
-        "shuffled_playlist": shuffled_playlist
-    }
+    return [item['spotify_id'] for item in shuffled_playlist]

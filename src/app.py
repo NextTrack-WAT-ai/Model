@@ -4,6 +4,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from flask import Flask, request, jsonify
 from reshuffler import shufflePlaylist, load_dataset, translateSpotifyID
+from utils import validate_playlist, format_response
 import pandas as pd
 
 app = Flask(__name__)
@@ -12,11 +13,11 @@ app = Flask(__name__)
 def shuffle():
     data = request.json
     user_playlist = data.get('playlist', [])
-
+    validate_playlist(user_playlist)
     try:
         df = load_dataset()
         shuffled_playlist = shufflePlaylist(df, user_playlist)
-        shuffled_playlist = [item['spotify_id'] for item in shuffled_playlist]
+        shuffled_playlist = format_response(shuffled_playlist)
         print("User Playlist:")
         translateSpotifyID(df, user_playlist)
         print("Shuffled Playlist:")
