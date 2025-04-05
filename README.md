@@ -54,25 +54,25 @@ reshuffler-api
    ```json
    {
        "playlist": [
-           {"name": "Song Title", "artist": "Artist Name"},
-           ...
-       ],
-       "first_song_choice": {"name": "First Song Title", "artist": "First Artist Name"}  // Optional
-   }
-   ```
-
-   ### Response
-   ```json
-   {
-       "shuffled_playlist": [
-           {"name": "Shuffled Song Title", "artist": "Shuffled Artist Name"},
+           "spotify_id1",
+           "spotify_id2",
            ...
        ]
    }
    ```
 
+   ### Response
+   ```json
+   [
+    {
+        "spotify_id1": "id1"
+    },
+    {
+        "spotify_id2": "id2"
+    },
+    ...
+   ]
+   ```
+
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
-
-## License
-This project is licensed under the MIT License. See the LICENSE file for more details.
