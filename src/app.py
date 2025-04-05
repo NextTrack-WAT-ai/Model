@@ -8,13 +8,12 @@ from utils import validate_playlist, display_playlist
 import pandas as pd
 
 app = Flask(__name__)
-
+df = load_dataset()
 @app.route('/shuffle', methods=['POST'])
 def shuffle():
     user_playlist = request.json
     validate_playlist(user_playlist)
     try:
-        df = load_dataset()
         shuffled_playlist = shufflePlaylist(df, user_playlist)
         print("User Playlist:")
         display_playlist(user_playlist)
