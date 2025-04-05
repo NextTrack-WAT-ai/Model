@@ -54,21 +54,24 @@ reshuffler-api
    ```json
    {
        "playlist": [
-           {"name": "Song Title", "artist": "Artist Name"},
+           "spotify_id1",
+           "spotify_id2",
            ...
-       ],
-       "first_song_choice": {"name": "First Song Title", "artist": "First Artist Name"}  // Optional
+       ]
    }
    ```
 
    ### Response
    ```json
-   {
-       "shuffled_playlist": [
-           {"name": "Shuffled Song Title", "artist": "Shuffled Artist Name"},
-           ...
-       ]
-   }
+   [
+    {
+        "spotify_id1": "id1"
+    },
+    {
+        "spotify_id2": "id2"
+    },
+    ...
+   ]
    ```
 
 ## Contributing
