@@ -84,15 +84,15 @@ def load_dataset():
 # 7. Return the shuffled playlist.
 
 # %%
-user_playlist = ['06UfBBDISthj1ZJAtX4xjj',
- '09ZQ5TmUG8TSL56n0knqrj',
- '01QoK9DA7VTeTSE3MNzp4I',
- '0keNu0t0tqsWtExGM3nT1D',
- '28YZkdihqt3e37t1IcqJIu',
- '0GG7ei637NDIN2w11TWtLC',
- '08A1lZeyLMWH58DT6aYjnC',
- '005lwxGU1tms6HGELIcUv9',
- '1jHhOrH4kIhjLFvagzvw1s']
+user_playlist = ["06UfBBDISthj1ZJAtX4xjj",
+ "09ZQ5TmUG8TSL56n0knqrj",
+ "01QoK9DA7VTeTSE3MNzp4I",
+ "0keNu0t0tqsWtExGM3nT1D",
+ "28YZkdihqt3e37t1IcqJIu",
+ "0GG7ei637NDIN2w11TWtLC",
+ "08A1lZeyLMWH58DT6aYjnC",
+ "005lwxGU1tms6HGELIcUv9",
+ "1jHhOrH4kIhjLFvagzvw1s"]
 
 
 
@@ -290,7 +290,7 @@ def demonstrate_playlist_shuffler(df, user_playlist):
         song_names = dict(zip(df['spotify_id'], df['name']))
         print("Randomly Selected First Song Playlist:")
         for i, song in enumerate(shuffled_playlist_random, 1):
-            print(f"{i}. {song_names[song['spotify_id']]}")
+            print(f"{i}. {song_names[song['spotify_id']]}, Spotify ID: {song['spotify_id']}")
 
         print("\n")
 
@@ -308,11 +308,33 @@ def demonstrate_playlist_shuffler(df, user_playlist):
     except Exception as e:
         print(f"An error occurred: {e}")
 
+def translateSpotifyID(df, playlist):
+    """
+    Translate Spotify IDs in the shuffled playlist to song names.
 
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The database of songs containing features for similarity calculation
+    shuffled_playlist : list
+        Shuffled playlist with Spotify IDs
 
+    Returns:
+    --------
+    list
+        Shuffled playlist with song names
+    """
+    song_names = dict(zip(df['spotify_id'], df['name']))
+    song_artists = dict(zip(df['spotify_id'], df['artist']))
+    if (isinstance(playlist[0], dict)):
+        for i, song in enumerate(playlist, 1):
+            print(f"{i}. {song_names[song['spotify_id']]} by {song_artists[song['spotify_id']]}")
+    else:
+        for i, song in enumerate(playlist, 1):
+            print(f"{i}. {song_names[song]} by {song_artists[song]}")
 
 # %%
-demonstrate_playlist_shuffler(df, user_playlist)
+# demonstrate_playlist_shuffler(df, user_playlist)
 
 # %%
 
