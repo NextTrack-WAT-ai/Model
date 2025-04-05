@@ -207,7 +207,8 @@ def shufflePlaylist(df, user_playlist, feature_weights=None):
         Shuffled playlist with song details
     """
 
-    if (feature_weights is None):
+    if feature_weights is None:
+        # Considering this as default weights for features
         feature_weights = {
             'key': 3.0,           # Key is 3x more important
             'tempo': 2.0,         # Tempo is 2x more important
@@ -255,6 +256,10 @@ def shufflePlaylist(df, user_playlist, feature_weights=None):
         columns=numerical_features,
         index=features_df.index
     )
+
+    for feature, weight in feature_weights.items():
+        if feature in features_df_normalized.columns:
+            features_df_normalized[feature] *= weight
 
     # Step 4: Select first song
     current_song_idx = random.choice(user_df.index)
