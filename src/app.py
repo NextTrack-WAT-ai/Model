@@ -16,7 +16,7 @@ def shuffle():
     try:
         df = load_dataset()
         shuffled_playlist = shufflePlaylist(df, user_playlist)
-        # print(shuffled_playlist)
+        shuffled_playlist = [item['spotify_id'] for item in shuffled_playlist]
         print("User Playlist:")
         translateSpotifyID(df, user_playlist)
         print("Shuffled Playlist:")

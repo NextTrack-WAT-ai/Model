@@ -188,7 +188,7 @@ feature_weights = {
 
 from sklearn.preprocessing import StandardScaler
 
-def shufflePlaylist(df, user_playlist):
+def shufflePlaylist(df, user_playlist, feature_weights=None):
     """
     Shuffle a playlist based on song similarities in the database.
 
@@ -206,6 +206,15 @@ def shufflePlaylist(df, user_playlist):
     list
         Shuffled playlist with song details
     """
+
+    if (feature_weights is None):
+        feature_weights = {
+            'key': 3.0,           # Key is 3x more important
+            'tempo': 2.0,         # Tempo is 2x more important
+            'speechiness': 0.5,   # Speechiness is half as important
+            'danceability': 2.5   # Danceability is 2.5x more important
+        }
+
     # Step 1: Validate and match user playlist songs with database
     matched_indices = []
     song_name_mapping = dict(zip(df['spotify_id'], df['name']))
