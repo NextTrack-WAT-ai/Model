@@ -4,5 +4,6 @@ def validate_playlist(playlist):
     
     return True
 
-def format_response(shuffled_playlist):
-    return [item['spotify_id'] for item in shuffled_playlist]
+def display_playlist(playlist):
+    for i, song in enumerate(playlist, start=1):
+        print(f"{i}. {song['name']} by {song['artist']}")

@@ -84,20 +84,20 @@ def load_dataset():
 # 7. Return the shuffled playlist.
 
 # %%
-user_playlist = ["06UfBBDISthj1ZJAtX4xjj",
- "09ZQ5TmUG8TSL56n0knqrj",
- "01QoK9DA7VTeTSE3MNzp4I",
- "0keNu0t0tqsWtExGM3nT1D",
- "28YZkdihqt3e37t1IcqJIu",
- "0GG7ei637NDIN2w11TWtLC",
- "08A1lZeyLMWH58DT6aYjnC",
- "005lwxGU1tms6HGELIcUv9",
- "1jHhOrH4kIhjLFvagzvw1s"]
+# user_playlist = ["06UfBBDISthj1ZJAtX4xjj",
+#  "09ZQ5TmUG8TSL56n0knqrj",
+#  "01QoK9DA7VTeTSE3MNzp4I",
+#  "0keNu0t0tqsWtExGM3nT1D",
+#  "28YZkdihqt3e37t1IcqJIu",
+#  "0GG7ei637NDIN2w11TWtLC",
+#  "08A1lZeyLMWH58DT6aYjnC",
+#  "005lwxGU1tms6HGELIcUv9",
+#  "1jHhOrH4kIhjLFvagzvw1s"]
 
 
 
 # %%
-df = load_dataset()
+# df = load_dataset()
 # def shufflePlaylist(playlist, first_song_choice):
 #   # see if the songs exist in the database
 #   matched_indices = []
@@ -173,12 +173,12 @@ df = load_dataset()
 
 
 # %%
-feature_weights = {
-        'key': 3.0,           # Key is 3x more important
-        'tempo': 2.0,         # Tempo is 2x more important
-        'speechiness': 0.5,   # Speechiness is half as important
-        'danceability': 2.5   # Danceability is 2.5x more important
-    }
+# feature_weights = {
+#         'key': 3.0,           # Key is 3x more important
+#         'tempo': 2.0,         # Tempo is 2x more important
+#         'speechiness': 0.5,   # Speechiness is half as important
+#         'danceability': 2.5   # Danceability is 2.5x more important
+#     }
 
 
 # shufflePlaylist(user_playlist, None)
@@ -218,14 +218,14 @@ def shufflePlaylist(df, user_playlist, feature_weights=None):
 
     # Step 1: Validate and match user playlist songs with database
     matched_indices = []
-    song_name_mapping = dict(zip(df['spotify_id'], df['name']))
     for song in user_playlist:
         matches = df[
-            df['spotify_id'] == song
+            (df['name'] == song.get('name')) &
+            (df['artist'] == song.get('artist'))
         ]
 
         if matches.empty:
-            print(f"Warning: Song '{song_name_mapping[song]}' not found in database.")
+            print(f"Warning: Song '{song.get('name')}' not found in database.")
         else:
             matched_indices.append(matches.index[0])
     # Raise error if no songs found
@@ -272,7 +272,8 @@ def shufflePlaylist(df, user_playlist, feature_weights=None):
     while remaining_indices:
         # Add current song to shuffled playlist
         song_info = {
-            'spotify_id': user_df.loc[current_song_idx, 'spotify_id'],
+            'name': user_df.loc[current_song_idx, 'name'],
+            'artist': user_df.loc[current_song_idx, 'artist'],
         }
         shuffled_playlist.append(song_info)
 
@@ -301,10 +302,9 @@ def demonstrate_playlist_shuffler(df, user_playlist):
     try:
         # Option 1: Randomly select first song
         shuffled_playlist_random = shufflePlaylist(df, user_playlist)
-        song_names = dict(zip(df['spotify_id'], df['name']))
         print("Randomly Selected First Song Playlist:")
         for i, song in enumerate(shuffled_playlist_random, 1):
-            print(f"{i}. {song_names[song['spotify_id']]}, Spotify ID: {song['spotify_id']}")
+            print(f"{i}. {song['name']}, by: {song['artist']}")
 
         print("\n")
 
@@ -542,8 +542,8 @@ def run_multiple_shuffles(df, user_playlist, num_shuffles=100):
 
 
 # Perform a single shuffle evaluation
-shuffled_playlist = shufflePlaylist(df, user_playlist)
-metrics = calculate_similarity_metrics(shuffled_playlist, df)
+# shuffled_playlist = shufflePlaylist(df, user_playlist)
+# metrics = calculate_similarity_metrics(shuffled_playlist, df)
 # visualize_playlist_evaluation(metrics)
 
 # Perform comprehensive evaluation

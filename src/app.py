@@ -3,25 +3,23 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from flask import Flask, request, jsonify
-from reshuffler import shufflePlaylist, load_dataset, translateSpotifyID
-from utils import validate_playlist, format_response
+from reshuffler import shufflePlaylist, load_dataset
+from utils import validate_playlist, display_playlist
 import pandas as pd
 
 app = Flask(__name__)
 
 @app.route('/shuffle', methods=['POST'])
 def shuffle():
-    data = request.json
-    user_playlist = data.get('playlist', [])
+    user_playlist = request.json
     validate_playlist(user_playlist)
     try:
         df = load_dataset()
         shuffled_playlist = shufflePlaylist(df, user_playlist)
-        shuffled_playlist = format_response(shuffled_playlist)
         print("User Playlist:")
-        translateSpotifyID(df, user_playlist)
+        display_playlist(user_playlist)
         print("Shuffled Playlist:")
-        translateSpotifyID(df, shuffled_playlist)
+        display_playlist(shuffled_playlist)
         return jsonify(shuffled_playlist), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
