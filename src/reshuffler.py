@@ -755,7 +755,7 @@ def penalize_similarity(df, song_a_idx, song_b_idx, feature_weights):
 # todo : I don't know how to get feedback from user clicking thumbs up or down 
 # todo : The reordering is not implemented if the user like the playlist. It's the same playlist as before. But, our weights do get updated (re-inforcing the good pairs)
 
-def get_user_feedback():
+def get_user_feedback(user_playlist):
     """
     Get user feedback on the playlist.
 
@@ -769,6 +769,7 @@ def get_user_feedback():
     feedback = {}
 
     # Get like/dislike feedback
+    # todo : This needs to change to thumbs up or down from a button push 
     liked = input("Did you like the playlist? (yes/no): ").strip().lower()
     if liked == "yes":
         feedback['liked'] = True
@@ -781,19 +782,133 @@ def get_user_feedback():
     # Get reordered playlist feedback
     reordered = []
     print("Please provide the reordered playlist (enter 'done' when finished):")
-    while True:
-        song_index = input("Enter song index (or 'done' to finish): ").strip()
-        if song_index.lower() == "done":
-            break
-        try:
-            song_index = int(song_index)
-            song_name = input("Enter song name: ").strip()
-            song_artist = input("Enter song artist: ").strip()
-            reordered.append({'index': song_index, 'name': song_name, 'artist': song_artist})
-        except ValueError:
-            print("Invalid input. Please enter a valid song index.")
+    # todo: This needs to change to get users' final re-ordered playlist (user drags the songs to re-order then) 
+    # while True:
+    #     song_index = input("Enter song index (or 'done' to finish): ").strip()
+    #     if song_index.lower() == "done":
+    #         break
+    #     try:
+    #         song_index = int(song_index)
+    #         song_name = input("Enter song name: ").strip()
+    #         song_artist = input("Enter song artist: ").strip()
+    #         reordered.append({'index': song_index, 'name': song_name, 'artist': song_artist})
+    #     except ValueError:
+    #         print("Invalid input. Please enter a valid song index.")
+    sample_reordered = user_playlist.copy()
 
-    feedback['reordered'] = reordered
+    feedback['reordered'] = sample_reordered
     return feedback
 
+# * Example feedback : 
+# * feedback = {'liked': True} 
+# * feedback = {'liked': False, 'reordered': [{'index': 0, 'name': 'Song A', 'artist': 'Artist A'}, {'index': 1, 'name': 'Song B', 'artist': 'Artist B'}]}
+
 # todo : After getting the feedback, we need to update the weights of the features based on the feedback, and give the user a new playlist based on the updated weights.
+
+
+def display_updated_playlist(df, user_playlist, original_playlist, feedback, feature_weights=None):
+    """ Learns the weights from the feedback and gives the user a new playlist based on the updated weights.
+# TODO : fill these in 
+    Args:
+        df (_type_): _description_
+        user_playlist (_type_): _description_
+        original_playlist (_type_): _description_
+        feedback (_type_): _description_
+        feature_weights (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+    updated_feature_weights = update_weights_based_on_feedback(df, user_playlist, feedback, feature_weights)
+    first_song_choice = original_playlist[0]
+    updated_playlist = demonstrate_playlist_shuffler(df, original_playlist, first_song_choice, feature_weights=updated_feature_weights)
+
+
+    return updated_playlist
+
+def learn_from_reordered_playlist(original_playlist, reordered_playlist, df, feature_weights):
+    """
+    Adjust feature weights based on the user's re-ordered playlist.
+
+    Parameters:
+    -----------
+    original_playlist : list
+        Original playlist order (list of song dictionaries with 'name' and 'artist')
+    reordered_playlist : list
+        User-provided re-ordered playlist
+    df : pandas.DataFrame
+        The database of songs containing features
+    feature_weights : dict
+        Current feature weights
+
+    Returns:
+    --------
+    dict
+        Updated feature weights
+    """
+    # Map song names to indices in the DataFrame
+    def get_song_index(song):
+        """
+        Get the index of a song in the DataFrame.
+
+        Parameters:
+        -----------
+        song : dict or str
+            Song information as a dictionary with 'name' and 'artist' keys,
+            or a string representing the song name.
+
+        Returns:
+        --------
+        int or None
+            Index of the song in the DataFrame, or None if not found.
+        """
+        if isinstance(song, dict):
+            # Handle case where song is a dictionary
+            match = df[(df['name'] == song['name']) & (df['artist'] == song['artist'])]
+        elif isinstance(song, str):
+            # Handle case where song is a string (song name only)
+            match = df[df['name'] == song]
+        else:
+            raise ValueError("Song must be a dictionary with 'name' and 'artist' keys or a string.")
+
+        return match.index[0] if not match.empty else None
+
+    original_indices = [get_song_index(song) for song in original_playlist]
+    reordered_indices = [get_song_index(song) for song in reordered_playlist]
+
+    # Remove None values (songs not found in the database)
+    original_indices = [idx for idx in original_indices if idx is not None]
+    reordered_indices = [idx for idx in reordered_indices if idx is not None]
+
+    # Ensure both lists have the same length
+    if len(original_indices) != len(reordered_indices):
+        raise ValueError("Mismatch between original and reordered playlists.")
+
+    # Calculate feature differences between consecutive songs in both orders
+    feature_deltas_original = []
+    feature_deltas_reordered = []
+
+    for i in range(len(original_indices) - 1):
+        original_diff = df.iloc[original_indices[i + 1]][feature_weights.keys()] - df.iloc[original_indices[i]][feature_weights.keys()]
+        reordered_diff = df.iloc[reordered_indices[i + 1]][feature_weights.keys()] - df.iloc[reordered_indices[i]][feature_weights.keys()]
+        feature_deltas_original.append(original_diff)
+        feature_deltas_reordered.append(reordered_diff)
+
+    # Adjust weights based on the differences
+    for feature in feature_weights.keys():
+        original_sum = sum(abs(delta[feature]) for delta in feature_deltas_original)
+        reordered_sum = sum(abs(delta[feature]) for delta in feature_deltas_reordered)
+
+        # If the reordered playlist emphasizes a feature more, increase its weight
+        if reordered_sum > original_sum:
+            feature_weights[feature] += 0.1  # Increment weight
+        elif reordered_sum < original_sum:
+            feature_weights[feature] -= 0.1  # Decrement weight
+
+        # Ensure weights remain non-negative
+        feature_weights[feature] = max(0, feature_weights[feature])
+
+    return feature_weights
+
+
+
