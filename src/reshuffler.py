@@ -188,7 +188,7 @@ def load_dataset():
 
 from sklearn.preprocessing import StandardScaler
 
-def shufflePlaylist(df, user_playlist, feature_weights=None):
+def shufflePlaylist(df, user_playlist, first_song_choice=None, feature_weights=None):
     """
     Shuffle a playlist based on song similarities in the database.
 
@@ -197,7 +197,7 @@ def shufflePlaylist(df, user_playlist, feature_weights=None):
     df : pandas.DataFrame
         The database of songs containing features for similarity calculation
     user_playlist : list
-        List of spotify ids
+        List of dictionaries with 'name' and 'artist' keys
     first_song_choice : dict, optional
         Specific song to start the playlist with
 
@@ -206,49 +206,57 @@ def shufflePlaylist(df, user_playlist, feature_weights=None):
     list
         Shuffled playlist with song details
     """
-
-    if feature_weights is None:
-        # Considering this as default weights for features
-        feature_weights = {
-            'key': 3.0,           # Key is 3x more important
-            'tempo': 2.0,         # Tempo is 2x more important
-            'speechiness': 0.5,   # Speechiness is half as important
-            'danceability': 2.5   # Danceability is 2.5x more important
-        }
-
     # Step 1: Validate and match user playlist songs with database
+    
+    
     matched_indices = []
     for song in user_playlist:
         matches = df[
-            (df['name'] == song.get('name')) &
-            (df['artist'] == song.get('artist'))
+            (df['name'] == song.get(['name'])) &
+            (df['artist'] == song.get(['artist']))
         ]
 
         if matches.empty:
-            print(f"Warning: Song '{song.get('name')}' not found in database.")
+            print(f"Warning: Song '{song.get(['name'])}' not found in database.")
         else:
             matched_indices.append(matches.index[0])
+
     # Raise error if no songs found
     if not matched_indices:
         raise ValueError("No songs from user's playlist were found in the database.")
 
-    # Step 2: Create subset of matched songs
     user_df = df.loc[matched_indices].copy()
 
-    # Step 3: Select and normalize numerical features
     numerical_features = [
         'year', 'duration_ms', 'danceability', 'key', 'loudness',
         'mode', 'speechiness', 'acousticness', 'instrumentalness',
         'liveness', 'valence', 'tempo', 'time_signature'
     ]
 
-    # Sanity check for features
+    # Sanity check for features --- not needed really 
     numerical_features = [
         feat for feat in numerical_features if feat in user_df.columns
     ]
 
-    # Normalize features
+
+    # weights
+    # Default weights: equal importance for all features
+    if feature_weights is None:
+        feature_weights = {feature: 1.0 for feature in numerical_features}
+    else:
+        # Ensure all features have weights (default to 1.0 if not specified)
+        for feature in numerical_features:
+            if feature not in feature_weights:
+                feature_weights[feature] = 1.0
+
+    # Normalize and apply weights
     features_df = user_df[numerical_features].copy()
+    # for feature in numerical_features:
+    #     if features_df[feature].std() > 0:  # Avoid division by zero
+    #         # Normalize the feature
+    #         features_df[feature] = (features_df[feature] - features_df[feature].mean()) / features_df[feature].std()
+    #         # Apply the weight
+    #         features_df[feature] = features_df[feature] * feature_weights[feature]
     scaler = StandardScaler()
     features_normalized = scaler.fit_transform(features_df)
     features_df_normalized = pd.DataFrame(
@@ -260,9 +268,24 @@ def shufflePlaylist(df, user_playlist, feature_weights=None):
     for feature, weight in feature_weights.items():
         if feature in features_df_normalized.columns:
             features_df_normalized[feature] *= weight
+    
+
 
     # Step 4: Select first song
-    current_song_idx = random.choice(user_df.index)
+    if first_song_choice:
+        # Find index of specified first song
+        first_song_matches = user_df[
+            (user_df['name'] == first_song_choice['name']) &
+            (user_df['artist'] == first_song_choice['artist'])
+        ]
+
+        if first_song_matches.empty:
+            raise ValueError("The selected first song is not found in the user's playlist.")
+
+        current_song_idx = first_song_matches.index[0]
+    else:
+        # Randomly select first song
+        current_song_idx = random.choice(user_df.index)
 
     # Initialize shuffled playlist and remaining songs
     shuffled_playlist = []
@@ -273,7 +296,7 @@ def shufflePlaylist(df, user_playlist, feature_weights=None):
         # Add current song to shuffled playlist
         song_info = {
             'name': user_df.loc[current_song_idx, 'name'],
-            'artist': user_df.loc[current_song_idx, 'artist'],
+            'artist': user_df.loc[current_song_idx, 'artist']
         }
         shuffled_playlist.append(song_info)
 
@@ -297,30 +320,68 @@ def shufflePlaylist(df, user_playlist, feature_weights=None):
 
     return shuffled_playlist
 
-# Example usage function
-def demonstrate_playlist_shuffler(df, user_playlist):
+def demonstrate_playlist_shuffler(df, user_playlist, first_song_choice=None, feature_weights=None):
     try:
-        # Option 1: Randomly select first song
-        shuffled_playlist_random = shufflePlaylist(df, user_playlist)
-        print("Randomly Selected First Song Playlist:")
-        for i, song in enumerate(shuffled_playlist_random, 1):
-            print(f"{i}. {song['name']}, by: {song['artist']}")
+        if first_song_choice and feature_weights:
+            shuffled_playlist_specific = shufflePlaylist(
+                df,
+                user_playlist,
+                first_song_choice,
+                feature_weights
+            )
+            print(f"Weighted - Playlist Starting with {first_song_choice['name']}:")
+            for i, song in enumerate(shuffled_playlist_specific, 1):
+                print(f"{i}. {song['name']} by {song['artist']}")
 
-        print("\n")
+        elif first_song_choice==None and feature_weights:
+            shuffled_playlist_random = shufflePlaylist(df, user_playlist, first_song_choice=None, feature_weights=feature_weights)
+            print("Weighted - Randomly Selected First Song Playlist:")
+            for i, song in enumerate(shuffled_playlist_random, 1):
+                print(f"{i}. {song['name']} by {song['artist']}")
 
-        # Option 2: Specify first song
-        # first_song_choice = user_playlist[0]  # Example: use first song from playlist
-        # shuffled_playlist_specific = shufflePlaylist(
-        #     df,
-        #     user_playlist,
-        #     first_song_choice
-        # )
-        # print(f"Playlist Starting with {song_names[first_song_choice]}:")
-        # for i, song in enumerate(shuffled_playlist_specific, 1):
-        #     print(f"{i}. {song_names[song['spotify_id']]}")
+        elif first_song_choice and feature_weights==None:
+            shuffled_playlist_specific = shufflePlaylist(
+                df,
+                user_playlist,
+                first_song_choice,
+                feature_weights=None)
+            print(f"Playlist Starting with {first_song_choice['name']}:")
+            for i, song in enumerate(shuffled_playlist_specific, 1):
+                print(f"{i}. {song['name']} by {song['artist']}")
+        else:
+            shuffled_playlist_random = shufflePlaylist(df, user_playlist)
+            print("Randomly Selected First Song Playlist:")
+            for i, song in enumerate(shuffled_playlist_random, 1):
+                print(f"{i}. {song['name']} by {song['artist']}")
 
     except Exception as e:
         print(f"An error occurred: {e}")
+        
+        
+# # Example usage function --- changed to above 
+# def demonstrate_playlist_shuffler(df, user_playlist):
+#     try:
+#         # Option 1: Randomly select first song
+#         shuffled_playlist_random = shufflePlaylist(df, user_playlist)
+#         print("Randomly Selected First Song Playlist:")
+#         for i, song in enumerate(shuffled_playlist_random, 1):
+#             print(f"{i}. {song['name']}, by: {song['artist']}")
+
+#         print("\n")
+
+#         # Option 2: Specify first song
+#         # first_song_choice = user_playlist[0]  # Example: use first song from playlist
+#         # shuffled_playlist_specific = shufflePlaylist(
+#         #     df,
+#         #     user_playlist,
+#         #     first_song_choice
+#         # )
+#         # print(f"Playlist Starting with {song_names[first_song_choice]}:")
+#         # for i, song in enumerate(shuffled_playlist_specific, 1):
+#         #     print(f"{i}. {song_names[song['spotify_id']]}")
+
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
 
 def translateSpotifyID(df, playlist):
     """
@@ -552,4 +613,187 @@ def run_multiple_shuffles(df, user_playlist, num_shuffles=100):
 # %%
 
 
+def update_weights_based_on_feedback(df, playlist, feedback, feature_weights):
+    """
+    Update feature weights based on user feedback on the playlist.
 
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The database of songs containing features for similarity calculation.
+    playlist : list
+        The shuffled playlist generated by the algorithm.
+    feedback : dict
+        User feedback containing keys:
+        - 'liked': bool, whether the user liked the playlist.
+        - 'bad_transitions': list of tuples, pairs of songs (by index) that the user disliked.
+        - 'reordered': list, the user's reordered playlist (optional).
+    feature_weights : dict
+        Current feature weights.
+
+    Returns:
+    --------
+    dict
+        Updated feature weights.
+    """
+    if feedback.get('liked') is True:
+        print("User liked the playlist. Reinforcing successful pairs...")
+        for i in range(len(playlist) - 1):
+            song_a_idx = playlist[i]['index']
+            song_b_idx = playlist[i + 1]['index']
+            feature_weights = reinforce_similarity(df, song_a_idx, song_b_idx, feature_weights)
+        return feature_weights
+
+    if 'reordered' in feedback:
+        print("User reordered the playlist. Adjusting weights based on new order...")
+        reordered_playlist = feedback['reordered']
+        for i in range(len(reordered_playlist) - 1):
+            song_a_idx = reordered_playlist[i]['index']
+            song_b_idx = reordered_playlist[i + 1]['index']
+            feature_weights = reinforce_similarity(df, song_a_idx, song_b_idx, feature_weights)
+
+        original_pairs = {(playlist[i]['index'], playlist[i + 1]['index']) for i in range(len(playlist) - 1)}
+        new_pairs = {(reordered_playlist[i]['index'], reordered_playlist[i + 1]['index']) for i in range(len(reordered_playlist) - 1)}
+        broken_pairs = original_pairs - new_pairs
+        for song_a_idx, song_b_idx in broken_pairs:
+            feature_weights = penalize_similarity(df, song_a_idx, song_b_idx, feature_weights)
+    
+    return feature_weights
+
+
+def reinforce_similarity(df, song_a_idx, song_b_idx, feature_weights):
+    """
+    Reinforce similarity between two songs by increasing the weights of their shared features.
+
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The database of songs containing features for similarity calculation.
+    song_a_idx : int
+        Index of the first song.
+    song_b_idx : int
+        Index of the second song.
+    feature_weights : dict
+        Current feature weights.
+
+    Returns:
+    --------
+    dict
+        Updated feature weights.
+    """
+    
+    numerical_features = [
+        'year', 'duration_ms', 'danceability', 'key', 'loudness',
+        'mode', 'speechiness', 'acousticness', 'instrumentalness',
+        'liveness', 'valence', 'tempo', 'time_signature'
+    ]
+    
+    # Normalize and apply weights
+    features_df = df[numerical_features].copy()
+    # todo : change this to the standardscaler one from before 
+    for feature in features_df:
+        if features_df[feature].std() > 0:  # Avoid division by zero
+            # Normalize the feature
+            features_df[feature] = (features_df[feature] - features_df[feature].mean()) / features_df[feature].std()
+            # Apply the weight
+            features_df[feature] = features_df[feature] * feature_weights[feature]
+    
+    shared_features = features_df.loc[song_a_idx].copy() * features_df.loc[song_b_idx].copy()
+
+    for feature in feature_weights.keys():
+        if pd.api.types.is_numeric_dtype(type(shared_features.get(feature, 0))):
+            feature_weights[feature] += shared_features.get(feature, 0) * 0.1
+    
+    return feature_weights
+
+
+
+def penalize_similarity(df, song_a_idx, song_b_idx, feature_weights):
+    """
+    Penalize similarity between two songs by decreasing the weights of their shared features.
+
+    Parameters:
+    -----------
+    df : pandas.DataFrame
+        The database of songs containing features for similarity calculation.
+    song_a_idx : int
+        Index of the first song.
+    song_b_idx : int
+        Index of the second song.
+    feature_weights : dict
+        Current feature weights.
+
+    Returns:
+    --------
+    dict
+        Updated feature weights.
+    """
+    numerical_features = [
+        'year', 'duration_ms', 'danceability', 'key', 'loudness',
+        'mode', 'speechiness', 'acousticness', 'instrumentalness',
+        'liveness', 'valence', 'tempo', 'time_signature'
+    ]
+    
+    # Normalize and apply weights
+    features_df = df[numerical_features].copy()
+    # todo : change this to the standardscaler one from before
+    for feature in features_df:
+        if features_df[feature].std() > 0:  # Avoid division by zero
+            # Normalize the feature
+            features_df[feature] = (features_df[feature] - features_df[feature].mean()) / features_df[feature].std()
+            # Apply the weight
+            features_df[feature] = features_df[feature] * feature_weights[feature]
+    
+    shared_features = features_df.loc[song_a_idx].copy() * features_df.loc[song_b_idx].copy()
+
+    for feature in feature_weights.keys():
+        if pd.api.types.is_numeric_dtype(type(shared_features.get(feature, 0))):
+            feature_weights[feature] -= shared_features.get(feature, 0) * 0.1
+    return feature_weights
+
+
+# todo : I don't know how to get feedback from user clicking thumbs up or down 
+# todo : The reordering is not implemented if the user like the playlist. It's the same playlist as before. But, our weights do get updated (re-inforcing the good pairs)
+
+def get_user_feedback():
+    """
+    Get user feedback on the playlist.
+
+    Returns:
+    --------
+    dict
+        Feedback dictionary containing:
+        - 'liked': bool, whether the user liked the playlist.
+        - 'reordered': list, the user's reordered playlist.
+    """
+    feedback = {}
+
+    # Get like/dislike feedback
+    liked = input("Did you like the playlist? (yes/no): ").strip().lower()
+    if liked == "yes":
+        feedback['liked'] = True
+    elif liked == "no":
+        feedback['liked'] = False
+    else:
+        print("Invalid input. Assuming 'no'.")
+        feedback['liked'] = False
+
+    # Get reordered playlist feedback
+    reordered = []
+    print("Please provide the reordered playlist (enter 'done' when finished):")
+    while True:
+        song_index = input("Enter song index (or 'done' to finish): ").strip()
+        if song_index.lower() == "done":
+            break
+        try:
+            song_index = int(song_index)
+            song_name = input("Enter song name: ").strip()
+            song_artist = input("Enter song artist: ").strip()
+            reordered.append({'index': song_index, 'name': song_name, 'artist': song_artist})
+        except ValueError:
+            print("Invalid input. Please enter a valid song index.")
+
+    feedback['reordered'] = reordered
+    return feedback
+
+# todo : After getting the feedback, we need to update the weights of the features based on the feedback, and give the user a new playlist based on the updated weights.
