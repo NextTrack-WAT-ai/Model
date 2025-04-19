@@ -212,12 +212,12 @@ def shufflePlaylist(df, user_playlist, first_song_choice=None, feature_weights=N
     matched_indices = []
     for song in user_playlist:
         matches = df[
-            (df['name'] == song.get(['name'])) &
-            (df['artist'] == song.get(['artist']))
+            (df['name'] == song.get('name')) &
+            (df['artist'] == song.get('artist'))
         ]
 
         if matches.empty:
-            print(f"Warning: Song '{song.get(['name'])}' not found in database.")
+            print(f"Warning: Song '{song.get('name')}' not found in database.")
         else:
             matched_indices.append(matches.index[0])
 
