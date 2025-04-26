@@ -212,12 +212,12 @@ def shufflePlaylist(df, user_playlist, first_song_choice=None, feature_weights=N
     matched_indices = []
     for song in user_playlist:
         matches = df[
-            (df['name'] == song.get('name')) &
-            (df['artist'] == song.get('artist'))
+            (df['name'] == song.get(['name'])) &
+            (df['artist'] == song.get(['artist']))
         ]
 
         if matches.empty:
-            print(f"Warning: Song '{song.get('name')}' not found in database.")
+            print(f"Warning: Song '{song.get(['name'])}' not found in database.")
         else:
             matched_indices.append(matches.index[0])
 
@@ -755,7 +755,7 @@ def penalize_similarity(df, song_a_idx, song_b_idx, feature_weights):
 # todo : I don't know how to get feedback from user clicking thumbs up or down 
 # todo : The reordering is not implemented if the user like the playlist. It's the same playlist as before. But, our weights do get updated (re-inforcing the good pairs)
 
-def get_user_feedback(user_playlist):
+def get_user_feedback(user_playlist, liked):
     """
     Get user feedback on the playlist.
 
@@ -771,7 +771,7 @@ def get_user_feedback(user_playlist):
     # Get like/dislike feedback
     # todo : This needs to change to thumbs up or down from a button push 
     liked = input("Did you like the playlist? (yes/no): ").strip().lower()
-    if liked == "yes":
+    if liked:
         feedback['liked'] = True
     elif liked == "no":
         feedback['liked'] = False
@@ -782,7 +782,8 @@ def get_user_feedback(user_playlist):
     # Get reordered playlist feedback
     reordered = []
     print("Please provide the reordered playlist (enter 'done' when finished):")
-    # todo: This needs to change to get users' final re-ordered playlist (user drags the songs to re-order then) 
+    # todo: This needs to change to get users' final re-ordered playlist (user drags the songs to re-order them) 
+    # SAVE
     # while True:
     #     song_index = input("Enter song index (or 'done' to finish): ").strip()
     #     if song_index.lower() == "done":
@@ -801,9 +802,11 @@ def get_user_feedback(user_playlist):
 
 # * Example feedback : 
 # * feedback = {'liked': True} 
-# * feedback = {'liked': False, 'reordered': [{'index': 0, 'name': 'Song A', 'artist': 'Artist A'}, {'index': 1, 'name': 'Song B', 'artist': 'Artist B'}]}
+# * feedback = {'liked': False, 'reordered': [
+    # * {'index': 0, 'name': 'Song A', 'artist': 'Artist A'}, {'index': 1, 'name': 'Song B', 'artist': 'Artist B'}]}
 
 # todo : After getting the feedback, we need to update the weights of the features based on the feedback, and give the user a new playlist based on the updated weights.
+
 
 
 def display_updated_playlist(df, user_playlist, original_playlist, feedback, feature_weights=None):
@@ -909,6 +912,10 @@ def learn_from_reordered_playlist(original_playlist, reordered_playlist, df, fea
         feature_weights[feature] = max(0, feature_weights[feature])
 
     return feature_weights
+
+
+
+
 
 
 
