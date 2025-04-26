@@ -6,3 +6,4 @@ scipy
 kagglehub
 gunicorn
 pymongo
+python-dotenv
