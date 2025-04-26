@@ -14,7 +14,6 @@ app = Flask(__name__)
 df = load_dataset()
 MONGO_URI = os.environ.get('MONGO_DB_URI')
 @app.route('/shuffle', methods=['POST'])
-@app.route('/feedback', methods=['POST'])
 def shuffle():
     data = request.json
     user_playlist = data.get('playlist')
@@ -45,22 +44,28 @@ def shuffle():
     except Exception as e:
         return jsonify({"error": "An unexpected error occurred."}), 500
 
+@app.route('/feedback', methods=['POST'])
 def feedback():
     data = request.json
     user_reordered_playlist = data.get('playlist')
     user_email = data.get('email')
     validate_playlist(user_reordered_playlist)
     try:
-        original_order_playlist = sorted(user_reordered_playlist, key=lambda x: x['index'])
+        original_order_playlist = sorted(user_reordered_playlist, key=lambda x: x['trackIndex'])
         # Retrieve user from database
         client = MongoClient(MONGO_URI)
         db = client.users
         user = db.nextTrackUser.find_one({"email": user_email})
         feature_weights = None
+        numerical_features = [
+            'year', 'duration_ms', 'danceability', 'key', 'loudness',
+            'mode', 'speechiness', 'acousticness', 'instrumentalness',
+            'liveness', 'valence', 'tempo', 'time_signature'
+        ]
         if user:
             feature_weights = user["songFeaturePreferences"]
         else:
-            raise ValueError("User not found")
+            feature_weights = {feature: 1.0 for feature in numerical_features}
         # Learn from the user's reordered playlist
         updated_weights = learn_from_reordered_playlist(original_order_playlist, user_reordered_playlist, df, feature_weights)
         db.nextTrackUser.update_one({"email": user_email}, {"$set": {"songFeaturePreferences": updated_weights}})

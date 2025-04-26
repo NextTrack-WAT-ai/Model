@@ -845,6 +845,10 @@ def learn_from_reordered_playlist(original_playlist, reordered_playlist, df, fea
     dict
         Updated feature weights
     """
+
+    if not reordered_playlist:
+        return feature_weights
+
     # Map song names to indices in the DataFrame
     def get_song_index(song):
         """
@@ -887,14 +891,15 @@ def learn_from_reordered_playlist(original_playlist, reordered_playlist, df, fea
     feature_deltas_original = []
     feature_deltas_reordered = []
 
+    features = {k: v for k, v in feature_weights.items() if k in df.columns}
     for i in range(len(original_indices) - 1):
-        original_diff = df.iloc[original_indices[i + 1]][feature_weights.keys()] - df.iloc[original_indices[i]][feature_weights.keys()]
-        reordered_diff = df.iloc[reordered_indices[i + 1]][feature_weights.keys()] - df.iloc[reordered_indices[i]][feature_weights.keys()]
+        original_diff = df.iloc[original_indices[i + 1]][features.keys()] - df.iloc[original_indices[i]][features.keys()]
+        reordered_diff = df.iloc[reordered_indices[i + 1]][features.keys()] - df.iloc[reordered_indices[i]][features.keys()]
         feature_deltas_original.append(original_diff)
         feature_deltas_reordered.append(reordered_diff)
 
     # Adjust weights based on the differences
-    for feature in feature_weights.keys():
+    for feature in features:
         original_sum = sum(abs(delta[feature]) for delta in feature_deltas_original)
         reordered_sum = sum(abs(delta[feature]) for delta in feature_deltas_reordered)
 
