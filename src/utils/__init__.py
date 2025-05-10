@@ -1,5 +1,7 @@
+from typing import List
+
 def validate_playlist(playlist):
-    if not isinstance(playlist, list):
+    if not isinstance(playlist, List):
         raise ValueError("Playlist must be a list.")
     
     return True

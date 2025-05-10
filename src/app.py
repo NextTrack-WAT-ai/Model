@@ -48,6 +48,7 @@ def shuffle():
 def feedback():
     data = request.json
     user_reordered_playlist = data.get('playlist')
+    print(type(user_reordered_playlist))
     user_email = data.get('email')
     validate_playlist(user_reordered_playlist)
     try:
