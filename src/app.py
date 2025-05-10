@@ -50,7 +50,6 @@ def feedback():
     user_reordered_playlist = data.get('playlist')
     print(type(user_reordered_playlist))
     user_email = data.get('email')
-    validate_playlist(user_reordered_playlist)
     try:
         original_order_playlist = sorted(user_reordered_playlist, key=lambda x: x['trackIndex'])
         # Retrieve user from database
