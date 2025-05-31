@@ -13,6 +13,11 @@ from pymongo import MongoClient
 app = Flask(__name__)
 # df = load_dataset()
 MONGO_URI = os.environ.get('MONGO_DB_URI')
+
+@app.route('/health', methods=['GET'])
+def health():
+    return 'OK', 200
+
 @app.route('/shuffle', methods=['POST'])
 def shuffle():
     data = request.json
@@ -48,7 +53,6 @@ def shuffle():
 def feedback():
     data = request.json
     user_reordered_playlist = data.get('playlist')
-    print(type(user_reordered_playlist))
     user_email = data.get('email')
     try:
         original_order_playlist = sorted(user_reordered_playlist, key=lambda x: x['trackIndex'])
