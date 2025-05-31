@@ -1,0 +1,14 @@
+name: Reshuffler API Healthcheck
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  healthcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping reshuffler-api health endpoint
+        run: |
+          curl -f ${{ secrets.RESHUFFLER_API_HEALTH_URL }} || exit 1
